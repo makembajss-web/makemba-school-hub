@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>CBC School Hub — Kenya School Management System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap');
+
+:root{
+  --primary:#0D6B46; --primary-l:#12925F; --primary-d:#084D31;
+  --accent:#F5A623;  --accent-l:#FBBF5A;
+  --red:#E84545;     --sky:#1B9ED4;   --purple:#6C3FC5;
+  --ink:#0A1628;     --ink2:#1E3A2F;
+  --muted:#6B7280;   --border:#E5E7EB;
+  --bg:#F7FAF8;      --card:#FFFFFF;
+  --sidebar-w:240px;
+  --hdr:58px;
+  --radius:12px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;overflow:hidden}
+
+/* ═══ LAYOUT ═══ */
+#app{display:flex;height:100vh}
+
+/* ═══ SIDEBAR ═══ */
+#sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--ink2);display:flex;flex-direction:column;
+  overflow-y:auto;transition:transform .25s;z-index:200;
+}
+.sb-logo{
+  padding:18px 16px 14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-logo-icon{
+  width:36px;height:36px;background:var(--accent);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.sb-logo-text{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff;line-height:1.2}
+.sb-logo-text span{color:var(--accent-l);font-size:10px;font-weight:500;display:block}
+
+.sb-school{
+  padding:10px 14px;margin:10px 10px 0;
+  background:rgba(255,255,255,.06);border-radius:10px;
+}
+.sb-school-name{font-size:12px;font-weight:700;color:#fff;margin-bottom:2px}
+.sb-school-role{font-size:11px;color:rgba(255,255,255,.5)}
+
+.sb-section-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);padding:14px 16px 6px;
+}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;margin:1px 8px;border-radius:9px;
+  color:rgba(255,255,255,.65);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.active{background:var(--primary);color:#fff}
+.sb-item .sb-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.sb-item .sb-badge{
+  margin-left:auto;background:var(--accent);color:var(--ink);
+  font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;
+}
+
+.sb-footer{
+  margin-top:auto;padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);
+}
+.sb-footer p{font-size:11px;color:rgba(255,255,255,.3);line-height:1.5}
+.sb-footer strong{color:rgba(255,255,255,.5)}
+
+/* ═══ MAIN AREA ═══ */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── TOP BAR ── */
+#topbar{
+  height:var(--hdr);background:var(--card);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+#menu-toggle{
+  display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink);
+}
+#page-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ink)}
+#page-subtitle{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-btn{
+  padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card);font-size:13px;font-weight:600;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);transition:all .15s;
+}
+.tb-btn:hover{border-color:var(--primary);color:var(--primary)}
+.tb-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tb-btn.primary:hover{background:var(--primary-l)}
+.topbar-avatar{
+  width:34px;height:34px;background:var(--primary);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:13px;font-weight:800;flex-shrink:0;cursor:pointer;
+}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:0}
+.page{display:none;flex-direction:column;gap:20px;animation:fadein .2s ease}
+.page.active{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ═══ CARDS & GRIDS ═══ */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.card-header h3{font-size:15px;font-weight:700;color:var(--ink)}
+.card-body{padding:20px}
+.card-footer{padding:12px 20px;border-top:1px solid var(--border);background:var(--bg);border-radius:0 0 var(--radius) var(--radius)}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+
+/* ── STAT CARDS ── */
+.stat-card{
+  background:var(--card);border-radius:var(--radius);padding:18px 20px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px}
+.stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--ink);line-height:1}
+.stat-delta{font-size:12px;font-weight:600;margin-top:6px}
+.stat-delta.up{color:#16A34A} .stat-delta.down{color:var(--red)}
+.stat-icon{font-size:28px;margin-bottom:8px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--radius) var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);font-weight:700;text-align:left;padding:10px 14px;border-bottom:2px solid var(--border);color:var(--ink);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F9FBF9}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-ee{background:#DCFCE7;color:#166534}
+.badge-me{background:#DBEAFE;color:#1D4ED8}
+.badge-ae{background:#FEF9C3;color:#B45309}
+.badge-be{background:#FEE2E2;color:#DC2626}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-yellow{background:#FEF9C3;color:#B45309}
+.badge-red{background:#FEE2E2;color:#DC2626}
+.badge-gray{background:#F3F4F6;color:var(--ink)}
+.badge-purple{background:#EDE9FE;color:#7C3AED}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px;display:block}
+.form-label span{color:var(--red)}
+.form-control{
+  width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);
+  background:var(--card);transition:border-color .15s;outline:none;
+}
+.form-control:focus{border-color:var(--primary)}
+select.form-control{cursor:pointer}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:8px;border:1.5px solid transparent;
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;
+}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-l)}
+.btn-secondary{background:var(--card);color:var(--ink);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px}
+.btn-accent{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+
+/* ── TABS ── */
+.tab-row{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{
+  padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;
+  border:none;background:none;color:var(--muted);border-bottom:3px solid transparent;
+  font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:-2px;transition:all .15s;
+}
+.tab-btn.active,.tab-btn:hover{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── PROGRESS BARS ── */
+.progress-wrap{background:#E5E7EB;border-radius:30px;height:8px;overflow:hidden}
+.progress-fill{height:8px;border-radius:30px;transition:width .4s}
+.fill-green{background:var(--primary)} .fill-blue{background:var(--sky)}
+.fill-yellow{background:var(--accent)} .fill-red{background:var(--red)}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border-radius:16px;width:100%;max-width:580px;
+  max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);
+}
+.modal-header{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-header h3{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-body{padding:22px}
+.modal-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* ── ALERTS ── */
+.alert{padding:12px 16px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.alert-success{background:#DCFCE7;color:#166534;border:1px solid #86EFAC}
+.alert-warning{background:#FFFBEB;color:#92400E;border:1px solid #FCD34D}
+.alert-info{background:#DBEAFE;color:#1D4ED8;border:1px solid #93C5FD}
+
+/* ── QUICK STATS ROW ── */
+.quick-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+
+/* ── SEARCH BOX ── */
+.search-box{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:9px;padding:7px 12px;
+}
+.search-box input{
+  border:none;background:transparent;outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;width:180px;
+}
+.search-box span{color:var(--muted);font-size:14px}
+
+/* ── NOTIFICATION TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:10px;
+  font-size:13px;font-weight:600;
+  box-shadow:var(--shadow-lg);z-index:9999;
+  transform:translateY(80px);opacity:0;transition:all .3s;
+  display:flex;align-items:center;gap:10px;max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.success{border-left:4px solid var(--primary-l)}
+#toast.error{border-left:4px solid var(--red)}
+
+/* ── ACTIVITY LIST ── */
+.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.act-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.act-text{font-size:13px;line-height:1.5}
+.act-time{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── PERSON CARDS ── */
+.person-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;display:flex;align-items:center;gap:12px;
+  transition:box-shadow .15s;cursor:pointer;
+}
+.person-card:hover{box-shadow:var(--shadow-lg)}
+.person-avatar{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.person-name{font-weight:700;font-size:14px}
+.person-meta{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── SIDEBAR OVERLAY ── */
+#sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;display:none}
+#sb-overlay.open{display:block}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
+  #sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #menu-toggle{display:block}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .quick-stats{grid-template-columns:1fr 1fr}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  #content{padding:14px}
+}
+
+/* ── PRINT STYLES ── */
+@media print{
+  #sidebar,#topbar,#toast,.btn,.tab-row,.no-print{display:none!important}
+  #app{display:block}#main{overflow:visible}#content{overflow:visible;padding:0}
+}
+
+/* Scheme colour codes */
+.c1{color:var(--primary);font-weight:700}
+.c2{color:var(--sky);font-weight:700}
+.c3{color:var(--accent);font-weight:700}
+.row-sep{border-top:2px solid var(--border)!important}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">🏫</div>
+    <div class="sb-logo-text">CBC School Hub<span>Kenya School Management</span></div>
+  </div>
+
+  <div class="sb-school">
+    <div class="sb-school-name" id="sb-school-name">Makemba Academy</div>
+    <div class="sb-school-role">Headteacher · 2025</div>
+  </div>
+
+  <div class="sb-section-label">Main</div>
+  <div class="sb-item active" onclick="nav('dashboard')"><span class="sb-icon">📊</span>Dashboard</div>
+  <div class="sb-item" onclick="nav('learners')"><span class="sb-icon">👦</span>Learners<span class="sb-badge" id="badge-learners">248</span></div>
+  <div class="sb-item" onclick="nav('teachers')"><span class="sb-icon">👩‍🏫</span>Teachers</div>
+  <div class="sb-item" onclick="nav('classes')"><span class="sb-icon">🏛️</span>Classes & Streams</div>
+
+  <div class="sb-section-label">Academic</div>
+  <div class="sb-item" onclick="nav('schemes')"><span class="sb-icon">📋</span>Schemes of Work</div>
+  <div class="sb-item" onclick="nav('lessonplans')"><span class="sb-icon">📝</span>Lesson Plans</div>
+  <div class="sb-item" onclick="nav('assessment')"><span class="sb-icon">📈</span>CBC Assessment</div>
+  <div class="sb-item" onclick="nav('reportcards')"><span class="sb-icon">📄</span>Report Cards</div>
+  <div class="sb-item" onclick="nav('timetable')"><span class="sb-icon">🕐</span>Timetable</div>
+
+  <div class="sb-section-label">Administration</div>
+  <div class="sb-item" onclick="nav('attendance')"><span class="sb-icon">✅</span>Attendance</div>
+  <div class="sb-item" onclick="nav('fees')"><span class="sb-icon">💰</span>Fees & M-Pesa</div>
+  <div class="sb-item" onclick="nav('communications')"><span class="sb-icon">📱</span>Parent Comms</div>
+  <div class="sb-item" onclick="nav('events')"><span class="sb-icon">📅</span>School Calendar</div>
+
+  <div class="sb-section-label">Development</div>
+  <div class="sb-item" onclick="nav('cpd')"><span class="sb-icon">🎓</span>Teacher CPD</div>
+  <div class="sb-item" onclick="nav('analytics')"><span class="sb-icon">🔭</span>Analytics</div>
+  <div class="sb-item" onclick="nav('settings')"><span class="sb-icon">⚙️</span>Settings</div>
+
+  <div class="sb-footer">
+    <p><strong>CBC School Hub v2.0</strong><br>Built for Kenya CBC/CBE<br>KICD & TSC Aligned</p>
+  </div>
+</nav>
+<div id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div id="main">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div>
+      <div id="page-title">Dashboard</div>
+      <div id="page-subtitle">Welcome back, Headteacher · Term 2, 2025</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="search-box no-print">
+        <span>🔍</span>
+        <input type="text" placeholder="Search learners, teachers…" oninput="globalSearch(this.value)">
+      </div>
+      <button class="tb-btn primary no-print" onclick="openModal('quick-action-modal')">+ New</button>
+      <div class="topbar-avatar" title="Your Profile">HT</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══════ PAGE: DASHBOARD ══════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="alert alert-info">📢 <div><strong>Term 2 CBA submission deadline:</strong> All Grade 6, 8 & 9 assessments must be uploaded to the KNEC CBA Portal by <strong>30th August 2025</strong>.</div></div>
+
+      <div class="quick-stats">
+        <div class="stat-card"><div class="stat-icon">👦</div><div class="stat-label">Total Learners</div><div class="stat-value">248</div><div class="stat-delta up">↑ 12 this term</div></div>
+        <div class="stat-card"><div class="stat-icon">👩‍🏫</div><div class="stat-label">Teaching Staff</div><div class="stat-value">18</div><div class="stat-delta up">↑ 2 this year</div></div>
+        <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-label">Schemes Done</div><div class="stat-value">91%</div><div class="stat-delta up">↑ 14% vs last term</div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Fees Collected</div><div class="stat-value">78%</div><div class="stat-delta down">↓ KES 84K outstanding</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Avg Attendance</div><div class="stat-value">94%</div><div class="stat-delta up">↑ 2% vs last week</div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-label">ME/EE Learners</div><div class="stat-value">76%</div><div class="stat-delta up">↑ 8% vs last term</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>📊 CBC Performance Overview — Term 2</h3><span class="badge badge-green">Live</span></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">Exceeding Expectations (EE)</span><span class="badge badge-ee">18%</span></div>
+                <div class="progress-wrap"><div class="progress-fill fill-green" style="width:18%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">Meeting Expectations (ME)</span><span class="badge badge-me">58%</span></div>
+                <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:58%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">Approaching Expectations (AE)</span><span class="badge badge-ae">17%</span></div>
+                <div class="progress-wrap"><div class="progress-fill fill-yellow" style="width:17%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">Below Expectations (BE)</span><span class="badge badge-be">7%</span></div>
+                <div class="progress-wrap"><div class="progress-fill fill-red" style="width:7%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer" style="font-size:12px;color:var(--muted)">Based on 1,240 strand assessments</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>🕐 Recent Activity</h3><button class="btn btn-sm btn-secondary" onclick="nav('analytics')">View All</button></div>
+          <div class="card-body" style="padding:14px 20px">
+            <div class="activity-item"><div class="act-dot" style="background:#DCFCE7">📋</div><div><div class="act-text"><strong>Ms. Wanjiru</strong> submitted Grade 4 Mathematics scheme</div><div class="act-time">2 hours ago</div></div></div>
+            <div class="activity-item"><div class="act-dot" style="background:#DBEAFE">💰</div><div><div class="act-text">M-Pesa payment received — <strong>KES 12,500</strong></div><div class="act-time">3 hours ago</div></div></div>
+            <div class="activity-item"><div class="act-dot" style="background:#FEF9C3">📈</div><div><div class="act-text"><strong>Grade 7</strong> CBA marks updated — 42 learners assessed</div><div class="act-time">Yesterday</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: LEARNERS ══════ -->
+    <div id="page-learners" class="page">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="search-box" style="flex:1;min-width:200px"><span>🔍</span><input type="text" placeholder="Search by name, admission no…" id="learner-search" oninput="filterLearners(this.value)" style="width:100%"></div>
+        <select class="form-control" id="class-filter" onchange="filterLearners('')" style="width:160px">
+          <option value="">All Classes</option>
+          <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('add-learner-modal')">+ Enrol Learner</button>
+        <button class="btn btn-secondary" onclick="exportLearners()">⬇ Export</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Enrolled Learners <span id="learner-count" style="color:var(--muted);font-weight:500;font-size:13px">(248 total)</span></h3>
+          <div style="display:flex;gap:8px">
+            <span class="badge badge-green">Girls: 124</span>
+            <span class="badge badge-blue">Boys: 124</span>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table id="learner-table">
+            <thead><tr><th>Adm No.</th><th>Full Name</th><th>Class</th><th>Gender</th><th>Parent Phone</th><th>Fees Status</th><th>CBC Level</th><th>Actions</th></tr></thead>
+            <tbody id="learner-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: TEACHERS ══════ -->
+    <div id="page-teachers" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="openModal('add-teacher-modal')">+ Add Teacher</button>
+        <button class="btn btn-secondary">⬇ TSC Returns</button>
+      </div>
+      <div class="grid-auto" id="teacher-cards"></div>
+    </div>
+
+    <!-- ══════ PAGE: CLASSES ══��═══ -->
+    <div id="page-classes" class="page">
+      <div class="grid-3" id="classes-grid"></div>
+    </div>
+
+    <!-- ══════ PAGE: SCHEMES OF WORK ══════ -->
+    <div id="page-schemes" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+        <select class="form-control" id="scheme-grade" style="width:140px" onchange="buildScheme()">
+          <option value="">Select Grade</option>
+          <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+        </select>
+        <select class="form-control" id="scheme-subject" style="width:180px" onchange="buildScheme()">
+          <option value="">Select Subject</option>
+          <option>Mathematics</option><option>English</option><option>Kiswahili</option>
+          <option>Integrated Science</option><option>Social Studies</option>
+        </select>
+        <select class="form-control" id="scheme-term" style="width:120px" onchange="buildScheme()">
+          <option value="1">Term 1</option><option value="2" selected>Term 2</option><option value="3">Term 3</option>
+        </select>
+        <button class="btn btn-primary" onclick="buildScheme()">🔄 Generate Scheme</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+      </div>
+
+      <div class="card" id="scheme-output">
+        <div class="card-header"><h3 id="scheme-title">Select grade, subject and term to generate a scheme of work</h3></div>
+        <div class="card-body" id="scheme-body">
+          <div style="text-align:center;padding:40px;color:var(--muted)">
+            <div style="font-size:48px;margin-bottom:12px">📋</div>
+            <p>Choose a grade, subject and term above, then click <strong>Generate Scheme</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: LESSON PLANS ══════ -->
+    <div id="page-lessonplans" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="generateLessonPlan()">⚡ Generate Lesson Plan</button>
+        <button class="btn btn-secondary" onclick="openModal('upload-lp-modal')">📁 Upload My Plan</button>
+      </div>
+      <div id="lp-output">
+        <div class="card">
+          <div class="card-header"><h3>📚 Lesson Plan Library</h3></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Subject</th><th>Grade</th><th>Topic/Strand</th><th>Week</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td>Mathematics</td><td>Grade 7</td><td>Linear Equations</td><td>Week 3</td><td><span class="badge badge-green">Approved</span></td><td><button class="btn btn-sm btn-secondary">View</button></td></tr>
+            <tr><td>English</td><td>Grade 5</td><td>Comprehension — Narratives</td><td>Week 4</td><td><span class="badge badge-blue">Submitted</span></td><td><button class="btn btn-sm btn-secondary">Review</button></td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: CBC ASSESSMENT ══════ -->
+    <div id="page-assessment" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <select class="form-control" id="assess-grade" style="width:140px" onchange="loadAssessmentView()">
+          <option value="">Select Grade</option>
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+        </select>
+        <select class="form-control" id="assess-subject" style="width:180px">
+          <option>Mathematics</option><option>English</option><option>Kiswahili</option>
+          <option>Integrated Science</option><option>Social Studies</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadAssessmentGrid()">Load Class</button>
+      </div>
+
+      <div class="card" id="assess-grid-card" style="display:none;margin-top:20px">
+        <div class="card-header">
+          <h3 id="assess-grid-title">CBC Assessment Grid</h3>
+          <div style="display:flex;gap:6px">
+            <span class="badge badge-ee">EE</span>
+            <span class="badge badge-me">ME</span>
+            <span class="badge badge-ae">AE</span>
+            <span class="badge badge-be">BE</span>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table id="assess-table"></table></div>
+        <div class="card-footer" style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-sm" onclick="saveAssessment()">💾 Save Marks</button>
+          <button class="btn btn-secondary btn-sm" onclick="toast('Exported to Excel!','success')">⬇ Export</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: REPORT CARDS ══════ -->
+    <div id="page-reportcards" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap" class="no-print">
+        <select class="form-control" id="rc-grade" style="width:140px">
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+        </select>
+        <select class="form-control" id="rc-learner" style="width:200px">
+          <option>Aisha Wanjiku Kamau</option>
+          <option>Brian Otieno Mwangi</option>
+          <option>Cynthia Achieng Odhiambo</option>
+        </select>
+        <button class="btn btn-primary" onclick="buildReportCard()">📄 Generate Report Card</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print Report</button>
+      </div>
+      <div id="report-card-container"></div>
+    </div>
+
+    <!-- ══════ PAGE: TIMETABLE ══════ -->
+    <div id="page-timetable" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <select class="form-control" id="tt-class" style="width:160px" onchange="buildTimetable()">
+          <option>Grade 7 Blue</option><option>Grade 7 Red</option>
+          <option>Grade 8 Blue</option><option>Grade 9 Blue</option>
+        </select>
+        <button class="btn btn-secondary" onclick="buildTimetable()">🔄 Refresh</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 id="tt-title">Class Timetable — Term 2, 2025</h3></div>
+        <div class="card-body" style="overflow-x:auto"><div id="tt-container"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: ATTENDANCE ══════ -->
+    <div id="page-attendance" class="page">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <input type="date" class="form-control" id="att-date" style="width:160px" value="2025-06-16">
+        <select class="form-control" id="att-class" style="width:160px">
+          <option>Grade 7 Blue</option><option>Grade 7 Red</option>
+          <option>Grade 8 Blue</option><option>Grade 9 Blue</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadAttendance()">Load Class</button>
+        <button class="btn btn-secondary" onclick="markAllPresent()">✅ Mark All Present</button>
+        <button class="btn btn-secondary" onclick="toast('Attendance saved!','success')">💾 Save</button>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:4px">
+        <div class="stat-card"><div class="stat-label">Present</div><div class="stat-value" id="att-present" style="color:var(--primary)">-</div></div>
+        <div class="stat-card"><div class="stat-label">Absent</div><div class="stat-value" id="att-absent" style="color:var(--red)">-</div></div>
+        <div class="stat-card"><div class="stat-label">Late</div><div class="stat-value" id="att-late" style="color:var(--accent)">-</div></div>
+        <div class="stat-card"><div class="stat-label">Attendance %</div><div class="stat-value" id="att-pct" style="color:var(--sky)">-</div></div>
+      </div>
+
+      <div class="card" id="att-card" style="display:none">
+        <div class="card-header"><h3 id="att-title">Attendance Register</h3></div>
+        <div class="tbl-wrap"><table id="att-table"></table></div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: FEES ══════ -->
+    <div id="page-fees" class="page">
+      <div class="alert alert-success">✅ M-Pesa Paybill <strong>123456</strong> is active. All payments recorded automatically.</div>
+      <div class="grid-4">
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Total Expected</div><div class="stat-value">KES 868K</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Collected</div><div class="stat-value" style="color:var(--primary)">KES 674K</div></div>
+        <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label">Outstanding</div><div class="stat-value" style="color:var(--red)">KES 194K</div></div>
+        <div class="stat-card"><div class="stat-icon">📱</div><div class="stat-label">M-Pesa Payments</div><div class="stat-value">143</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>💳 Recent M-Pesa Transactions</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Learner</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody id="fees-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: PARENT COMMS ══════ -->
+    <div id="page-communications" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>📢 Send Announcement</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Recipients</label>
+              <select class="form-control"><option>All Parents</option><option>Grade 7 Parents</option></select></div>
+            <div class="form-group"><label class="form-label">Channel</label>
+              <select class="form-control"><option>WhatsApp</option><option>SMS</option></select></div>
+            <div class="form-group"><label class="form-label">Message</label>
+              <textarea class="form-control" rows="5" placeholder="Type your message…"></textarea></div>
+            <button class="btn btn-primary" onclick="toast('Message sent!','success')">📤 Send Message</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>📋 Message Templates</h3></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-secondary" onclick="toast('Fee reminder template loaded!','success')">💰 Fee Reminder</button>
+            <button class="btn btn-secondary" onclick="toast('Results notice loaded!','success')">📊 Results Notice</button>
+            <button class="btn btn-secondary" onclick="toast('Meeting notice loaded!','success')">👥 Parent Meeting</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: EVENTS ══════ -->
+    <div id="page-events" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 id="cal-month-label">June 2025</h3>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm btn-secondary" onclick="changeMonth(-1)">‹</button>
+              <button class="btn btn-sm btn-secondary" onclick="changeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px">
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Mon</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Tue</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Wed</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Thu</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Fri</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Sat</div>
+              <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">Sun</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px" id="cal-days"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>📅 Upcoming Events</h3></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Event</th></tr></thead>
+          <tbody>
+            <tr><td>16 Jun</td><td>Today — Term 2 Week 3</td></tr>
+            <tr><td>23–27 Jun</td><td>Mid-Term Assessments</td></tr>
+            <tr><td>28 Jun</td><td>Parent-Teacher Meeting</td></tr>
+            <tr><td>2 Aug</td><td>Term 2 Closing</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: CPD ══════ -->
+    <div id="page-cpd" class="page">
+      <div class="alert alert-info">🎓 Teachers must complete at least 2 CPD modules per term per TSC requirements.</div>
+      <div class="card">
+        <div class="card-header"><h3>📚 Available CPD Courses</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Course</th><th>Duration</th><th>Enrolled</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CBC Assessment Design</strong></td><td>3 hrs</td><td>14/18</td><td><button class="btn btn-sm btn-secondary">View</button></td></tr>
+          <tr><td><strong>Competency-Based Teaching</strong></td><td>4 hrs</td><td>18/18</td><td><span class="badge badge-green">Completed</span></td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: ANALYTICS ══════ -->
+    <div id="page-analytics" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>📊 Performance by Grade</h3></div>
+          <div class="card-body">
+            <table><thead><tr><th>Grade</th><th>EE</th><th>ME</th><th>AE</th><th>BE</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Grade 4</strong></td><td><span class="badge badge-ee">22%</span></td><td><span class="badge badge-me">61%</span></td><td><span class="badge badge-ae">13%</span></td><td><span class="badge badge-be">4%</span></td></tr>
+              <tr><td><strong>Grade 7</strong></td><td><span class="badge badge-ee">18%</span></td><td><span class="badge badge-me">59%</span></td><td><span class="badge badge-ae">16%</span></td><td><span class="badge badge-be">7%</span></td></tr>
+              <tr><td><strong>Grade 9</strong></td><td><span class="badge badge-ee">20%</span></td><td><span class="badge badge-me">60%</span></td><td><span class="badge badge-ae">14%</span></td><td><span class="badge badge-be">6%</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PAGE: SETTINGS ══════ -->
+    <div id="page-settings" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><h3>🏫 School Profile</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">School Name</label><input class="form-control" id="set-school-name" value="Makemba Academy & Junior School"></div>
+            <div class="form-group"><label class="form-label">KNEC Centre Number</label><input class="form-control" value="12345678"></div>
+            <div class="form-group"><label class="form-label">M-Pesa Paybill</label><input class="form-control" value="123456"></div>
+            <button class="btn btn-primary" onclick="saveSettings()">💾 Save Profile</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>⚙️ System Settings</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Current Academic Year</label>
+              <select class="form-control"><option>2025</option><option>2026</option></select></div>
+            <div class="form-group"><label class="form-label">Current Term</label>
+              <select class="form-control"><option>Term 1</option><option selected>Term 2</option><option>Term 3</option></select></div>
+            <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════ MODALS ══════ -->
+<div class="modal-overlay" id="add-learner-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>👦 Enrol New Learner</h3><button class="modal-close" onclick="closeModal('add-learner-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><label class="form-label">First Name <span>*</span></label><input class="form-control" id="new-fname" placeholder="First name"></div><div class="form-group"><label class="form-label">Surname <span>*</span></label><input class="form-control" id="new-lname" placeholder="Surname"></div></div>
+      <div class="form-group"><label class="form-label">Admission No. <span>*</span></label><input class="form-control" id="new-adm" placeholder="e.g. 2025/001"></div>
+      <div class="form-group"><label class="form-label">Class <span>*</span></label><select class="form-control" id="new-class"><option>Grade 1</option><option>Grade 4</option><option>Grade 7</option><option>Grade 9</option></select></div>
+      <div class="form-group"><label class="form-label">Parent Phone <span>*</span></label><input class="form-control" id="new-phone" placeholder="07XX XXX XXX"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('add-learner-modal')">Cancel</button><button class="btn btn-primary" onclick="addLearner()">✅ Enrol</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="add-teacher-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>👩‍🏫 Add Teacher</h3><button class="modal-close" onclick="closeModal('add-teacher-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Full Name <span>*</span></label><input class="form-control" id="t-name" placeholder="Teacher name"></div>
+      <div class="form-group"><label class="form-label">Subjects Taught</label><input class="form-control" id="t-subjects" placeholder="e.g. Mathematics, Science"></div>
+      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" id="t-phone" placeholder="07XX XXX XXX"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('add-teacher-modal')">Cancel</button><button class="btn btn-primary" onclick="addTeacher()">✅ Add Teacher</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="quick-action-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><h3>⚡ Quick Actions</h3><button class="modal-close" onclick="closeModal('quick-action-modal')">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-secondary" onclick="closeModal('quick-action-modal');openModal('add-learner-modal')">👦 Enrol New Learner</button>
+      <button class="btn btn-secondary" onclick="closeModal('quick-action-modal');openModal('add-teacher-modal')">👩‍🏫 Add Teacher</button>
+      <button class="btn btn-secondary" onclick="closeModal('quick-action-modal');nav('schemes')">📋 Generate Scheme</button>
+      <button class="btn btn-secondary" onclick="closeModal('quick-action-modal');nav('reportcards');buildReportCard()">📄 Generate Report Card</button>
+      <button class="btn btn-secondary" onclick="closeModal('quick-action-modal');nav('attendance');loadAttendance()">✅ Take Attendance</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
